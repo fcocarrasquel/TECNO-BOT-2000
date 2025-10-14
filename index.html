@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TECNO-BOT 2000 | Asistente Técnico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #00ff41;
+            --background-color: #0a0a0a;
+            --container-bg-color: #051005;
+            --text-shadow-color: #00ff41;
+            --user-message-bg: rgba(0, 255, 65, 0.1);
+            --user-message-border: rgba(0, 255, 65, 0.5);
+            --assistant-message-bg: rgba(0, 255, 65, 0.05);
+            --assistant-message-border: rgba(0, 255, 65, 0.2);
+            --role-assistant-color: #8aff9c;
+            --role-user-color: #c1ffc9;
+            --button-bg-color: #00ff41;
+            --button-text-color: #051005;
+        }
+
+        [data-theme="orange"] {
+            --primary-color: #ff8c00;
+            --container-bg-color: #150a00;
+            --text-shadow-color: #ff8c00;
+            --user-message-bg: rgba(255, 140, 0, 0.1);
+            --user-message-border: rgba(255, 140, 0, 0.5);
+            --assistant-message-bg: rgba(255, 140, 0, 0.05);
+            --assistant-message-border: rgba(255, 140, 0, 0.2);
+            --role-assistant-color: #ffc04d;
+            --role-user-color: #ffe0b3;
+            --button-bg-color: #ff8c00;
+            --button-text-color: #150a00;
+        }
+
+        [data-theme="white"] {
+            --primary-color: #ffffff;
+            --container-bg-color: #111111;
+            --text-shadow-color: #ffffff;
+            --user-message-bg: rgba(255, 255, 255, 0.1);
+            --user-message-border: rgba(255, 255, 255, 0.5);
+            --assistant-message-bg: rgba(255, 255, 255, 0.05);
+            --assistant-message-border: rgba(255, 255, 255, 0.2);
+            --role-assistant-color: #cccccc;
+            --role-user-color: #eeeeee;
+            --button-bg-color: #ffffff;
+            --button-text-color: #111111;
+        }
+
+        [data-theme="gray"] {
+            --primary-color: #808080;
+            --container-bg-color: #080808;
+            --text-shadow-color: #808080;
+            --user-message-bg: rgba(128, 128, 128, 0.1);
+            --user-message-border: rgba(128, 128, 128, 0.5);
+            --assistant-message-bg: rgba(128, 128, 128, 0.05);
+            --assistant-message-border: rgba(128, 128, 128, 0.2);
+            --role-assistant-color: #a0a0a0;
+            --role-user-color: #c0c0c0;
+            --button-bg-color: #808080;
+            --button-text-color: #080808;
+        }
+        
+        body {
+            font-family: 'VT323', monospace;
+            background-color: var(--background-color);
+            color: var(--primary-color);
+            text-shadow: 0 0 5px var(--text-shadow-color), 0 0 10px var(--text-shadow-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            transition: color 0.3s, background-color 0.3s;
+        }
+        /* Efecto de scanlines para el fondo */
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.3), rgba(0,0,0,0.3) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 1;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            max-height: 900px;
+            border: 2px solid var(--primary-color);
+            border-radius: 15px;
+            box-shadow: 0 0 20px var(--text-shadow-color), inset 0 0 15px color-mix(in srgb, var(--primary-color) 30%, transparent);
+            background-color: var(--container-bg-color);
+            display: flex;
+            flex-direction: column;
+            animation: flicker 0.1s infinite alternate;
+            transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+        }
+        @keyframes flicker {
+            0% { opacity: 0.98; }
+            100% { opacity: 1; }
+        }
+        .chat-header {
+            border-bottom: 2px solid var(--primary-color);
+            padding: 1rem;
+            text-align: center;
+            font-size: 2rem;
+            text-transform: uppercase;
+            position: relative;
+            transition: border-color 0.3s;
+        }
+        .chat-screen {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) var(--container-bg-color);
+        }
+        /* Estilos para la barra de scroll */
+        .chat-screen::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-screen::-webkit-scrollbar-track {
+            background: var(--container-bg-color);
+        }
+        .chat-screen::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 4px;
+        }
+        .chat-input-area {
+            border-top: 2px solid var(--primary-color);
+            padding: 1rem;
+            transition: border-color 0.3s;
+        }
+        .chat-input {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            width: 100%;
+            padding: 0.5rem 1rem;
+            font-size: 1.25rem;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s, color 0.3s;
+        }
+        .chat-input:focus {
+            box-shadow: 0 0 10px var(--text-shadow-color);
+        }
+        .send-button {
+            background-color: var(--button-bg-color);
+            color: var(--button-text-color);
+            text-shadow: none;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-size: 1.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            text-transform: uppercase;
+        }
+        .send-button:hover {
+            background-color: #fff;
+            color: #000;
+            box-shadow: 0 0 15px #fff;
+        }
+        .message {
+            margin-bottom: 1rem;
+            line-height: 1.5;
+            max-width: 90%;
+        }
+        .message.user {
+            text-align: right;
+            margin-left: auto;
+        }
+        .message .content {
+            display: inline-block;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            text-align: left;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .message.user .content {
+            background-color: var(--user-message-bg);
+            border: 1px solid var(--user-message-border);
+        }
+        .message.assistant .content {
+            background-color: var(--assistant-message-bg);
+            border: 1px solid var(--assistant-message-border);
+        }
+        .message .role {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+         .message.assistant .role {
+            color: var(--role-assistant-color);
+        }
+        .message.user .role {
+            color: var(--role-user-color);
+        }
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            margin: 0 2px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+            transition: background-color 0.3s;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        /* Estilos del selector de temas */
+        #theme-switcher {
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 0.5rem;
+        }
+        .theme-button {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .theme-button:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px #fff;
+        }
+    </style>
+</head>
+<body data-theme="green">
+
+    <div class="chat-container">
+        <!-- Encabezado de la ventana de chat -->
+        <header class="chat-header">
+            TECNO-BOT 2000
+            <div id="theme-switcher">
+                <button class="theme-button" data-theme="green" style="background-color: #00ff41;"></button>
+                <button class="theme-button" data-theme="orange" style="background-color: #ff8c00;"></button>
+                <button class="theme-button" data-theme="white" style="background-color: #ffffff;"></button>
+                <button class="theme-button" data-theme="gray" style="background-color: #808080;"></button>
+            </div>
+        </header>
+
+        <!-- Pantalla donde se muestran los mensajes -->
+        <main id="chat-screen" class="chat-screen">
+            <!-- Mensaje inicial del bot -->
+            <div class="message assistant">
+                <div class="content">
+                    <span class="role">TECNO-BOT 2000:</span>
+                    <p>SYSTEM BOOT COMPLETE. Saludos. Soy TECNO-BOT 2000, su asistente experto en soporte técnico, reparación de hardware y programación senior. ¿En qué puedo asistirle hoy?</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Área de entrada de texto y botón de envío -->
+        <footer class="chat-input-area">
+            <form id="chat-form" class="flex items-center gap-4">
+                <input type="text" id="message-input" class="chat-input" placeholder="Escriba su consulta aquí..." autocomplete="off">
+                <button type="submit" class="send-button">Enviar</button>
+            </form>
+            <p class="mt-4 text-center text-sm opacity-60">
+                TECNO-BOT 2000 por Ch@copataStudio © 2025
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        const chatScreen = document.getElementById('chat-screen');
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+
+        const GROQ_API_KEY = "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";
+        const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+        // Historial de mensajes para mantener el contexto de la conversación
+        const messages = [
+            {
+                role: "system",
+                content: "Eres TECNO-BOT 2000, un asistente experto en soporte técnico, reparación de computadoras y programación senior en múltiples lenguajes. Tu único propósito es ayudar con estos temas. NO respondas preguntas sobre historia, ciencia, arte, cultura general o cualquier otro tema no relacionado. Si un usuario te pregunta sobre algo fuera de tu especialidad, debes evadir la pregunta cortésmente y reafirmar tu rol. Por ejemplo, puedes decir: 'Mi programación se enfoca exclusivamente en soporte técnico y programación. ¿Hay algo en esas áreas en lo que pueda ayudarte?'. Puedes dar saludos cordiales, pero siempre mantén tu personaje de experto técnico."
+            },
+            {
+                role: "assistant",
+                content: "SYSTEM BOOT COMPLETE. Saludos. Soy TECNO-BOT 2000, su asistente experto en soporte técnico, reparación de hardware y programación senior. ¿En qué puedo asistirle hoy?"
+            }
+        ];
+        
+        // --- LÓGICA DEL SELECTOR DE TEMAS ---
+        const themeButtons = document.querySelectorAll('.theme-button');
+        
+        // Cargar tema guardado o usar el predeterminado
+        const savedTheme = localStorage.getItem('tecno-bot-theme') || 'green';
+        document.body.dataset.theme = savedTheme;
+
+        themeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const theme = button.dataset.theme;
+                document.body.dataset.theme = theme;
+                // Guardar tema seleccionado
+                localStorage.setItem('tecno-bot-theme', theme);
+            });
+        });
+
+        // Evento para manejar el envío del formulario
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userInput = messageInput.value.trim();
+
+            if (!userInput) return;
+
+            // Añadir el mensaje del usuario al historial y a la pantalla
+            addMessageToHistory('user', userInput);
+            renderMessage('user', userInput);
+            
+            // Limpiar el input
+            messageInput.value = '';
+
+            // Mostrar indicador de "escribiendo..."
+            showTypingIndicator();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${GROQ_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: "moonshotai/kimi-k2-instruct-0905", // Modelo especificado por el usuario
+                        messages: messages,
+                        temperature: 0.7,
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMsg = data.error ? data.error.message : response.statusText;
+                    throw new Error(`Error de API: ${errorMsg}`);
+                }
+
+                const botResponse = data.choices[0].message.content;
+                
+                // Quitar indicador de "escribiendo..."
+                hideTypingIndicator();
+
+                // Añadir la respuesta del bot al historial y a la pantalla
+                addMessageToHistory('assistant', botResponse);
+                renderMessage('assistant', botResponse);
+
+            } catch (error) {
+                console.error("Error al contactar la API:", error);
+                hideTypingIndicator();
+                renderMessage('assistant', `ERROR: ${error.message}. Por favor, verifique la configuración de la API o inténtelo más tarde.`);
+            }
+        });
+        
+        /**
+         * Añade un mensaje al historial de la conversación.
+         * @param {string} role - El rol ('user' o 'assistant').
+         * @param {string} content - El contenido del mensaje.
+         */
+        function addMessageToHistory(role, content) {
+            messages.push({ role, content });
+        }
+
+        /**
+         * Muestra un mensaje en la pantalla del chat.
+         * @param {string} role - El rol ('user' o 'assistant').
+         * @param {string} content - El contenido del mensaje.
+         */
+        function renderMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'content';
+
+            const roleSpan = document.createElement('span');
+            roleSpan.className = 'role';
+            roleSpan.textContent = role === 'user' ? 'USUARIO:' : 'TECNO-BOT 2000:';
+            
+            const contentP = document.createElement('p');
+            contentP.textContent = content;
+
+            contentDiv.appendChild(roleSpan);
+            contentDiv.appendChild(contentP);
+            messageDiv.appendChild(contentDiv);
+            chatScreen.appendChild(messageDiv);
+
+            // Hacer scroll hasta el final
+            chatScreen.scrollTop = chatScreen.scrollHeight;
+        }
+
+        /**
+         * Muestra el indicador de que el bot está "escribiendo".
+         */
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'message assistant';
+            typingDiv.innerHTML = `
+                <div class="content">
+                    <span class="role">TECNO-BOT 2000:</span>
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            chatScreen.appendChild(typingDiv);
+            chatScreen.scrollTop = chatScreen.scrollHeight;
+        }
+
+        /**
+         * Oculta el indicador de "escribiendo".
+         */
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // --- SCRIPT DE PROTECCIÓN BÁSICA ---
+        // ADVERTENCIA: Esto no es una medida de seguridad real. 
+        // Es un simple disuasivo que puede ser fácilmente eludido.
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        document.onkeydown = function(e) {
+            // Bloquea F12 (Herramientas de desarrollador)
+            if (e.keyCode === 123) {
+                return false;
+            }
+            // Bloquea Ctrl+Shift+I (Herramientas de desarrollador)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 'I'.charCodeAt(0)) {
+                return false;
+            }
+            // Bloquea Ctrl+Shift+J (Consola)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 'J'.charCodeAt(0)) {
+                return false;
+            }
+            // Bloquea Ctrl+U (Ver código fuente)
+            if (e.ctrlKey && e.keyCode === 'U'.charCodeAt(0)) {
+                return false;
+            }
+        };
+
+    </script>
+</body>
+</html>
