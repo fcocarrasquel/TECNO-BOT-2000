@@ -294,8 +294,8 @@
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
 
-        const GROQ_API_KEY = "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";
-        const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+        // URL modificada para usar el backend de Vercel
+        const API_URL = "/api/chat";
 
         // Historial de mensajes para mantener el contexto de la conversación
         const messages = [
@@ -346,20 +346,17 @@
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${GROQ_API_KEY}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: "moonshotai/kimi-k2-instruct-0905", // Modelo especificado por el usuario
-                        messages: messages,
-                        temperature: 0.7,
+                        messages: messages
                     })
                 });
 
                 const data = await response.json();
 
                 if (!response.ok) {
-                    const errorMsg = data.error ? data.error.message : response.statusText;
+                    const errorMsg = data.error ? data.error : response.statusText;
                     throw new Error(`Error de API: ${errorMsg}`);
                 }
 
