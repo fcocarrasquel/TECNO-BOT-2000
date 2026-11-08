@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     }
 
     // Llamar a la API de NVIDIA (compatible con OpenAI)
-    // Modelo ligero y rápido: Llama 3.1 de 8B
+    // Modelo ligero y rápido: Laguna XS 2.1 de Poolside (solo 3B activos por token)
     const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: "meta/llama-3.1-8b-instruct",
+        model: "poolside/laguna-xs-2.1",
         messages: messages,
         temperature: 0.7,
       })
