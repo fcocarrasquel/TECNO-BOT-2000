@@ -12,23 +12,25 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Mensajes requeridos' });
     }
 
-    // Tu clave privada como variable de entorno
-    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+    // Clave de NVIDIA como variable de entorno (en Vercel: NVIDIA_API_KEY).
+    // Nunca escribas la clave directamente en este archivo: el repo es público.
+    const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 
-    if (!GROQ_API_KEY) {
-      console.error('GROQ_API_KEY no está configurada');
+    if (!NVIDIA_API_KEY) {
+      console.error('NVIDIA_API_KEY no está configurada');
       return res.status(500).json({ error: 'Configuración del servidor incorrecta' });
     }
 
-    // Llamar a la API de Groq
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // Llamar a la API de NVIDIA (compatible con OpenAI)
+    // Modelo ligero y rápido: Llama 3.1 de 8B
+    const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Authorization': `Bearer ${NVIDIA_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: "moonshotai/kimi-k2-instruct-0905",
+        model: "meta/llama-3.1-8b-instruct",
         messages: messages,
         temperature: 0.7,
       })
@@ -36,12 +38,12 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Error de Groq:', errorData);
-      throw new Error(`Error en API de Groq: ${response.status} ${response.statusText}`);
+      console.error('Error de NVIDIA:', errorData);
+      throw new Error(`Error en API de NVIDIA: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    
+
     // Devolver respuesta al frontend
     res.status(200).json(data);
 
